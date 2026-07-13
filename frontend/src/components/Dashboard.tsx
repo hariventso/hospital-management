@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -33,13 +33,39 @@ import {
   Stethoscope,
   BedDouble,
   TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  List,
+  UserPlus,
+  CalendarDays,
+  Hospital,
+  FolderOpen,
+  Pill,
+  TestTube,
+  CreditCard,
+  Phone,
+  BarChart3,
 } from 'lucide-react'
 
-const navigation = [
+const patientsMenu = {
+  name: 'Patients',
+  icon: Users,
+  children: [
+    { name: 'Liste des patients', href: '/dashboard/patients', icon: List },
+    { name: 'Ajouter un patient', href: '/dashboard/patients/add', icon: UserPlus },
+    { name: 'Rendez-vous', href: '/dashboard/patients/appointments', icon: CalendarDays },
+    { name: 'Hospitalisations', href: '/dashboard/patients/hospitalizations', icon: Hospital },
+    { name: 'Dossiers medicaux', href: '/dashboard/patients/records', icon: FolderOpen },
+    { name: 'Prescriptions', href: '/dashboard/patients/prescriptions', icon: Pill },
+    { name: 'Examens', href: '/dashboard/patients/exams', icon: TestTube },
+    { name: 'Facturation', href: '/dashboard/patients/billing', icon: CreditCard },
+    { name: "Contacts d'urgence", href: '/dashboard/patients/emergency-contacts', icon: Phone },
+    { name: 'Rapports', href: '/dashboard/patients/reports', icon: BarChart3 },
+  ],
+}
+
+const otherNav = [
   { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Patients', href: '/dashboard/patients', icon: Users },
-  { name: 'Rendez-vous', href: '/dashboard/appointments', icon: Calendar },
-  { name: 'Dossiers', href: '/dashboard/records', icon: FileText },
   { name: 'Parametres', href: '/dashboard/settings', icon: Settings },
 ]
 
@@ -57,12 +83,120 @@ const recentPatients = [
   { id: 4, name: 'Paul Rasoamanarivo', status: 'En cours', time: '14:00' },
 ]
 
-export default function Dashboard() {
+function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLogout?: () => void }) {
+  const location = useLocation()
+  const [patientsOpen, setPatientsOpen] = useState(
+    location.pathname.startsWith('/dashboard/patients')
+  )
+
+  const isPatientsActive = location.pathname.startsWith('/dashboard/patients')
+
+  return (
+    <nav className="flex flex-col gap-1 flex-1">
+      {otherNav.slice(0, 1).map((item) => {
+        const isActive = location.pathname === item.href
+        return (
+          <Link
+            key={item.name}
+            to={item.href}
+            onClick={onLinkClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            }`}
+          >
+            <item.icon className="size-4" />
+            {item.name}
+          </Link>
+        )
+      })}
+
+      <button
+        onClick={() => setPatientsOpen(!patientsOpen)}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+          isPatientsActive
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+        }`}
+      >
+        <patientsMenu.icon className="size-4" />
+        <span className="flex-1 text-left">{patientsMenu.name}</span>
+        {patientsOpen ? (
+          <ChevronDown className="size-4" />
+        ) : (
+          <ChevronRight className="size-4" />
+        )}
+      </button>
+
+      {patientsOpen && (
+        <div className="ml-4 flex flex-col gap-0.5 border-l border-border pl-3">
+          {patientsMenu.children.map((item) => {
+            const isActive = location.pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={onLinkClick}
+                className={`flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                }`}
+              >
+                <item.icon className="size-3.5" />
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+
+      {otherNav.slice(1).map((item) => {
+        const isActive = location.pathname === item.href
+        return (
+          <Link
+            key={item.name}
+            to={item.href}
+            onClick={onLinkClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            }`}
+          >
+            <item.icon className="size-4" />
+            {item.name}
+          </Link>
+        )
+      })}
+
+      <div className="mt-auto pt-4 border-t border-border">
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+        >
+          <LogOut className="size-4" />
+          Deconnexion
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
-  const handleLogout = () => {
+  const isHomePage = location.pathname === '/dashboard'
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' })
+    } catch {
+      // ignore
+    }
     localStorage.removeItem('token')
     navigate('/login')
   }
@@ -84,25 +218,7 @@ export default function Dashboard() {
 
           <Separator />
 
-          <nav className="flex flex-col gap-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                  }`}
-                >
-                  <item.icon className="size-4" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
+          <SidebarNav onLogout={handleLogout} />
         </div>
       </aside>
 
@@ -125,26 +241,9 @@ export default function Dashboard() {
               </div>
             </SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col gap-1 p-4">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  <item.icon className="size-4" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
+          <div className="p-4">
+            <SidebarNav onLinkClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -199,105 +298,116 @@ export default function Dashboard() {
 
         {/* Page Content */}
         <main className="p-4 lg:p-8">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
-            <p className="text-muted-foreground">Bienvenue, voici un apercu de votre hopital.</p>
-          </div>
+          {isHomePage ? (
+            <>
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
+                <p className="text-muted-foreground">Bienvenue, voici un apercu de votre hopital.</p>
+              </div>
 
-          {/* Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            {stats.map((stat) => (
-              <Card key={stat.name}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.name}
-                  </CardTitle>
-                  <stat.icon className="size-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    <span className={stat.changeType === 'positive' ? 'text-emerald-600' : 'text-muted-foreground'}>
-                      {stat.change}
-                    </span>
-                    {' '}vs mois dernier
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                {stats.map((stat) => (
+                  <Card key={stat.name}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        {stat.name}
+                      </CardTitle>
+                      <stat.icon className="size-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <p className="text-xs text-muted-foreground">
+                        <span className={stat.changeType === 'positive' ? 'text-emerald-600' : 'text-muted-foreground'}>
+                          {stat.change}
+                        </span>
+                        {' '}vs mois dernier
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Recent Patients */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="size-5" />
-                  Patients recents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentPatients.map((patient) => (
-                    <div key={patient.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-9">
-                          <AvatarFallback className="bg-muted text-xs font-medium">
-                            {patient.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">{patient.name}</p>
-                          <p className="text-xs text-muted-foreground">{patient.time}</p>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="size-5" />
+                      Patients recents
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentPatients.map((patient) => (
+                        <div key={patient.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="size-9">
+                              <AvatarFallback className="bg-muted text-xs font-medium">
+                                {patient.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium">{patient.name}</p>
+                              <p className="text-xs text-muted-foreground">{patient.time}</p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={
+                              patient.status === 'Admis'
+                                ? 'default'
+                                : patient.status === 'En attente'
+                                ? 'secondary'
+                                : 'outline'
+                            }
+                          >
+                            {patient.status}
+                          </Badge>
                         </div>
-                      </div>
-                      <Badge
-                        variant={
-                          patient.status === 'Admis'
-                            ? 'default'
-                            : patient.status === 'En attente'
-                            ? 'secondary'
-                            : 'outline'
-                        }
-                      >
-                        {patient.status}
-                      </Badge>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="size-5" />
-                  Actions rapides
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="h-20 flex flex-col gap-2">
-                    <Users className="size-5" />
-                    <span className="text-xs">Nouveau patient</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2">
-                    <Calendar className="size-5" />
-                    <span className="text-xs">Prendre RDV</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2">
-                    <FileText className="size-5" />
-                    <span className="text-xs">Nouveau dossier</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col gap-2">
-                    <Activity className="size-5" />
-                    <span className="text-xs">Voir rapports</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="size-5" />
+                      Actions rapides
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Link to="/dashboard/patients/add">
+                        <Button variant="outline" className="h-20 w-full flex flex-col gap-2">
+                          <Users className="size-5" />
+                          <span className="text-xs">Nouveau patient</span>
+                        </Button>
+                      </Link>
+                      <Link to="/dashboard/patients/appointments">
+                        <Button variant="outline" className="h-20 w-full flex flex-col gap-2">
+                          <Calendar className="size-5" />
+                          <span className="text-xs">Prendre RDV</span>
+                        </Button>
+                      </Link>
+                      <Link to="/dashboard/patients/records">
+                        <Button variant="outline" className="h-20 w-full flex flex-col gap-2">
+                          <FileText className="size-5" />
+                          <span className="text-xs">Nouveau dossier</span>
+                        </Button>
+                      </Link>
+                      <Link to="/dashboard/patients/reports">
+                        <Button variant="outline" className="h-20 w-full flex flex-col gap-2">
+                          <Activity className="size-5" />
+                          <span className="text-xs">Voir rapports</span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
     </div>
