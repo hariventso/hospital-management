@@ -89,6 +89,15 @@ class AuthController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        // In a real app, invalidate the session/token here
+        return $this->json([
+            'message' => 'Deconnexion reussie',
+        ]);
+    }
+
     #[Route('/api/me', name: 'api_me', methods: ['GET'])]
     public function me(): JsonResponse
     {
