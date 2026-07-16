@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -87,12 +87,12 @@ const stats = [
   { name: 'Activite recente', value: '89', icon: Activity, change: '+5%', changeType: 'positive' },
 ]
 
-const recentPatients = [
-  { id: 1, name: 'Marie Rakoto', status: 'Admis', time: '10:30' },
-  { id: 2, name: 'Jean Rabe', status: 'En attente', time: '11:00' },
-  { id: 3, name: 'Sophie Andry', status: 'Discharge', time: '09:15' },
-  { id: 4, name: 'Paul Rasoamanarivo', status: 'En cours', time: '14:00' },
-]
+interface Patient {
+  id: number
+  lastName: string
+  firstName: string
+  createdAt: string
+}
 
 function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLogout?: () => void }) {
   const location = useLocation()
@@ -241,10 +241,23 @@ function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLog
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([])
   const navigate = useNavigate()
   const location = useLocation()
 
   const isHomePage = location.pathname === '/dashboard'
+
+  useEffect(() => {
+    if (!isHomePage) return
+    fetch('/api/patients')
+      .then((res) => res.json())
+      .then((data) => {
+        const patients: Patient[] = data.patients || []
+        patients.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        setRecentPatients(patients.slice(0, 4))
+      })
+      .catch(() => {})
+  }, [isHomePage])
 
   const handleLogout = async () => {
     try {
@@ -392,30 +405,25 @@ export default function DashboardLayout() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      {recentPatients.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-4">Aucun patient</p>
+                      )}
                       {recentPatients.map((patient) => (
                         <div key={patient.id} className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Avatar className="size-9">
                               <AvatarFallback className="bg-muted text-xs font-medium">
-                                {patient.name.split(' ').map(n => n[0]).join('')}
+                                {patient.firstName?.[0]}{patient.lastName?.[0]}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="text-sm font-medium">{patient.name}</p>
-                              <p className="text-xs text-muted-foreground">{patient.time}</p>
+                              <p className="text-sm font-medium">{patient.firstName} {patient.lastName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(patient.createdAt).toLocaleDateString('fr-FR')}
+                              </p>
                             </div>
                           </div>
-                          <Badge
-                            variant={
-                              patient.status === 'Admis'
-                                ? 'default'
-                                : patient.status === 'En attente'
-                                ? 'secondary'
-                                : 'outline'
-                            }
-                          >
-                            {patient.status}
-                          </Badge>
+                          <Badge variant="outline">Nouveau</Badge>
                         </div>
                       ))}
                     </div>
