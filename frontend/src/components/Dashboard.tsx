@@ -60,7 +60,18 @@ const patientsMenu = {
     { name: 'Examens', href: '/dashboard/patients/exams', icon: TestTube },
     { name: 'Facturation', href: '/dashboard/patients/billing', icon: CreditCard },
     { name: "Contacts d'urgence", href: '/dashboard/patients/emergency-contacts', icon: Phone },
-    { name: 'Rapports', href: '/dashboard/patients/reports', icon: BarChart3 },
+  ],
+}
+
+const rapportsMenu = {
+  name: 'Rapports',
+  icon: BarChart3,
+  children: [
+    { name: 'Apercu general', href: '/dashboard/rapports', icon: BarChart3 },
+    { name: 'Patients', href: '/dashboard/rapports/patients', icon: Users },
+    { name: 'Hospitalisations', href: '/dashboard/rapports/hospitalisations', icon: BedDouble },
+    { name: 'Activite medicale', href: '/dashboard/rapports/activite', icon: Activity },
+    { name: 'Finance', href: '/dashboard/rapports/finance', icon: CreditCard },
   ],
 }
 
@@ -88,8 +99,12 @@ function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLog
   const [patientsOpen, setPatientsOpen] = useState(
     location.pathname.startsWith('/dashboard/patients')
   )
+  const [rapportsOpen, setRapportsOpen] = useState(
+    location.pathname.startsWith('/dashboard/rapports')
+  )
 
   const isPatientsActive = location.pathname.startsWith('/dashboard/patients')
+  const isRapportsActive = location.pathname.startsWith('/dashboard/rapports')
 
   return (
     <nav className="flex flex-col gap-1 flex-1">
@@ -132,6 +147,46 @@ function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLog
       {patientsOpen && (
         <div className="ml-4 flex flex-col gap-0.5 border-l border-border pl-3">
           {patientsMenu.children.map((item) => {
+            const isActive = location.pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                onClick={onLinkClick}
+                className={`flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                }`}
+              >
+                <item.icon className="size-3.5" />
+                {item.name}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+
+      <button
+        onClick={() => setRapportsOpen(!rapportsOpen)}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+          isRapportsActive
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+        }`}
+      >
+        <rapportsMenu.icon className="size-4" />
+        <span className="flex-1 text-left">{rapportsMenu.name}</span>
+        {rapportsOpen ? (
+          <ChevronDown className="size-4" />
+        ) : (
+          <ChevronRight className="size-4" />
+        )}
+      </button>
+
+      {rapportsOpen && (
+        <div className="ml-4 flex flex-col gap-0.5 border-l border-border pl-3">
+          {rapportsMenu.children.map((item) => {
             const isActive = location.pathname === item.href
             return (
               <Link
@@ -394,7 +449,7 @@ export default function DashboardLayout() {
                           <span className="text-xs">Nouveau dossier</span>
                         </Button>
                       </Link>
-                      <Link to="/dashboard/patients/reports">
+                      <Link to="/dashboard/rapports">
                         <Button variant="outline" className="h-20 w-full flex flex-col gap-2">
                           <Activity className="size-5" />
                           <span className="text-xs">Voir rapports</span>

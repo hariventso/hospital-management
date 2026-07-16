@@ -14,6 +14,11 @@ import Exams from './pages/patients/Exams'
 import Billing from './pages/patients/Billing'
 import EmergencyContacts from './pages/patients/EmergencyContacts'
 import Reports from './pages/patients/Reports'
+import ReportsOverview from './pages/rapports/ReportsOverview'
+import ReportsPatients from './pages/rapports/ReportsPatients'
+import ReportsHospitalizations from './pages/rapports/ReportsHospitalizations'
+import ReportsActivity from './pages/rapports/ReportsActivity'
+import ReportsFinance from './pages/rapports/ReportsFinance'
 
 export default function App() {
   return (
@@ -33,6 +38,11 @@ export default function App() {
           <Route path="patients/billing" element={<Billing />} />
           <Route path="patients/emergency-contacts" element={<EmergencyContacts />} />
           <Route path="patients/reports" element={<Reports />} />
+          <Route path="rapports" element={<ReportsOverview />} />
+          <Route path="rapports/patients" element={<ReportsPatients />} />
+          <Route path="rapports/hospitalisations" element={<ReportsHospitalizations />} />
+          <Route path="rapports/activite" element={<ReportsActivity />} />
+          <Route path="rapports/finance" element={<ReportsFinance />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
