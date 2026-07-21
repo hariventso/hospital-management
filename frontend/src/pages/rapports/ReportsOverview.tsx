@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,18 @@ import {
   Pill,
   AlertTriangle,
 } from 'lucide-react'
+
+function downloadCSV(filename: string, headers: string[], rows: string[][]) {
+  const bom = '\uFEFF'
+  const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(';')).join('\n')
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 interface Patient {
   id: number
@@ -140,6 +152,67 @@ export default function ReportsOverview() {
   const pendingExams = exams.filter((e) => e.status === 'En attente').length
   const abnormalResults = exams.filter((e) => e.result === 'Anormal').length
 
+  const exportAll = useCallback(() => {
+    const now = new Date()
+    const date = now.toISOString().split('T')[0]
+    downloadCSV(
+      `resume-hopital-${date}.csv`,
+      ['Section', 'Valeur'],
+      [
+        ['Patients total', String(patients.length)],
+        ['Nouveaux patients ce mois', String(patientThisMonth)],
+        ['Rendez-vous aujourd\'hui', String(todayAppointments)],
+        ['Rendez-vous en attente', String(pendingAppointments)],
+        ['Urgences', String(urgentAppointments)],
+        ['Hospitalisations actives', String(activeHospitalizations)],
+        ['Hospitalisations total', String(hospitalizations.length)],
+        ['Examens total', String(exams.length)],
+        ['Examens en attente', String(pendingExams)],
+        ['Resultats anormaux', String(abnormalResults)],
+        ['Prescriptions actives', String(activePrescriptions)],
+        ['Revenus totaux (AR)', String(totalPaid)],
+        ['Factures en attente', String(unpaidInvoices)],
+        ['Factures total', String(invoices.length)],
+      ],
+    )
+  }, [patients, patientThisMonth, todayAppointments, pendingAppointments, urgentAppointments, activeHospitalizations, hospitalizations, exams, pendingExams, abnormalResults, activePrescriptions, totalPaid, unpaidInvoices, invoices])
+
+  const exportPatients = useCallback(() => {
+    downloadCSV(
+      'patients.csv',
+      ['ID', 'Nom', 'Prenom', 'Date de naissance', 'Genre', 'Cree le'],
+      patients.map((p) => [String(p.id), p.lastName, p.firstName, p.dateOfBirth ?? '', p.gender, p.createdAt]),
+    )
+  }, [patients])
+
+  const exportHospitalisations = useCallback(() => {
+    downloadCSV(
+      'hospitalisations.csv',
+      ['ID', 'Patient', 'Service', 'Chambre', 'Date entree', 'Date sortie', 'Statut'],
+      hospitalizations.map((h) => [String(h.id), h.patientName, h.ward, h.room, h.admissionDate, h.dischargeDate ?? '', h.status]),
+    )
+  }, [hospitalizations])
+
+  const exportActivite = useCallback(() => {
+    const rows = [
+      ...exams.map((e) => ['Examen', String(e.id), e.patientName, e.type, e.doctor, e.date, e.status, e.result ?? '']),
+      ...prescriptions.map((p) => ['Prescription', String(p.id), p.patientName, p.medication, p.doctor, p.date, p.status, p.dosage]),
+    ]
+    downloadCSV(
+      'activite-medicale.csv',
+      ['Type', 'ID', 'Patient', 'Detail', 'Medecin', 'Date', 'Statut', 'Resultat/Dosage'],
+      rows,
+    )
+  }, [exams, prescriptions])
+
+  const exportFinance = useCallback(() => {
+    downloadCSV(
+      'finance.csv',
+      ['ID', 'Patient', 'Type', 'Montant (AR)', 'Paye (AR)', 'Date', 'Statut'],
+      invoices.map((i) => [String(i.id), i.patientName, i.type, i.amount, i.paidAmount, i.date, i.status]),
+    )
+  }, [invoices])
+
   const reportCategories = [
     {
       title: 'Patients',
@@ -187,6 +260,7 @@ export default function ReportsOverview() {
       date: now.toLocaleDateString('fr-FR'),
       type: 'Patients',
       count: `${patientThisMonth} nouveaux`,
+      onExport: exportPatients,
     },
     {
       id: 2,
@@ -194,6 +268,7 @@ export default function ReportsOverview() {
       date: now.toLocaleDateString('fr-FR'),
       type: 'Hospitalisations',
       count: `${activeHospitalizations} actifs`,
+      onExport: exportHospitalisations,
     },
     {
       id: 3,
@@ -201,6 +276,7 @@ export default function ReportsOverview() {
       date: now.toLocaleDateString('fr-FR'),
       type: 'Activite',
       count: `${exams.length + prescriptions.length} actes`,
+      onExport: exportActivite,
     },
     {
       id: 4,
@@ -208,6 +284,7 @@ export default function ReportsOverview() {
       date: now.toLocaleDateString('fr-FR'),
       type: 'Finance',
       count: `${totalPaid.toLocaleString('fr-FR')} AR payes`,
+      onExport: exportFinance,
     },
   ]
 
@@ -231,7 +308,7 @@ export default function ReportsOverview() {
             <Calendar className="mr-2 size-4" />
             {now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </Button>
-          <Button>
+          <Button onClick={exportAll}>
             <Download className="mr-2 size-4" />
             Exporter tout
           </Button>
@@ -456,7 +533,7 @@ export default function ReportsOverview() {
                     {report.type}
                   </Badge>
                   <span className="text-xs text-muted-foreground">{report.count}</span>
-                  <Button variant="ghost" size="icon" className="size-8">
+                  <Button variant="ghost" size="icon" className="size-8" onClick={report.onExport}>
                     <Download className="size-4" />
                   </Button>
                 </div>
