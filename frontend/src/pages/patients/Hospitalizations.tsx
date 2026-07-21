@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, BedDouble, Clock, CheckCircle, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -42,6 +43,7 @@ const emptyForm = {
 }
 
 export default function Hospitalizations() {
+  const { addToast } = useToast()
   const [hospitalizations, setHospitalizations] = useState<Hospitalization[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -133,8 +135,10 @@ export default function Hospitalizations() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Hospitalisation mise à jour avec succès' : 'Hospitalisation créée avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement de l\'hospitalisation', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -148,9 +152,12 @@ export default function Hospitalizations() {
       const res = await fetch(`/api/hospitalizations/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setHospitalizations((prev) => prev.filter((h) => h.id !== id))
+        addToast('Hospitalisation supprimée avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression de l\'hospitalisation', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression de l\'hospitalisation', 'error')
     } finally {
       setDeletingId(null)
     }

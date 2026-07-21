@@ -19,6 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import NotificationPanel from '@/components/NotificationPanel'
+import { useNotifications } from '@/hooks/useNotifications'
 import {
   LayoutDashboard,
   Users,
@@ -27,7 +29,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  Bell,
   Search,
   Activity,
   Stethoscope,
@@ -45,6 +46,7 @@ import {
   CreditCard,
   Phone,
   BarChart3,
+  Bell,
 } from 'lucide-react'
 
 const patientsMenu = {
@@ -94,7 +96,7 @@ interface Patient {
   createdAt: string
 }
 
-function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLogout?: () => void }) {
+function SidebarNav({ onLinkClick, onLogout, unreadCount }: { onLinkClick?: () => void; onLogout?: () => void; unreadCount?: number }) {
   const location = useLocation()
   const [patientsOpen, setPatientsOpen] = useState(
     location.pathname.startsWith('/dashboard/patients')
@@ -226,6 +228,24 @@ function SidebarNav({ onLinkClick, onLogout }: { onLinkClick?: () => void; onLog
         )
       })}
 
+      <Link
+        to="/dashboard/notifications"
+        onClick={onLinkClick}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          location.pathname === '/dashboard/notifications'
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+        }`}
+      >
+        <Bell className="size-4" />
+        <span className="flex-1">Notifications</span>
+        {(unreadCount ?? 0) > 0 && (
+          <span className="flex items-center justify-center size-5 rounded-full bg-destructive text-[10px] font-bold text-white">
+            {unreadCount! > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </Link>
+
       <div className="mt-auto pt-4 border-t border-border">
         <button
           onClick={onLogout}
@@ -244,6 +264,7 @@ export default function DashboardLayout() {
   const [recentPatients, setRecentPatients] = useState<Patient[]>([])
   const navigate = useNavigate()
   const location = useLocation()
+  const { unreadCount } = useNotifications()
 
   const isHomePage = location.pathname === '/dashboard'
 
@@ -286,7 +307,7 @@ export default function DashboardLayout() {
 
           <Separator />
 
-          <SidebarNav onLogout={handleLogout} />
+          <SidebarNav onLogout={handleLogout} unreadCount={unreadCount} />
         </div>
       </aside>
 
@@ -310,7 +331,7 @@ export default function DashboardLayout() {
             </SheetTitle>
           </SheetHeader>
           <div className="p-4">
-            <SidebarNav onLinkClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+            <SidebarNav onLinkClick={() => setSidebarOpen(false)} onLogout={handleLogout} unreadCount={unreadCount} />
           </div>
         </SheetContent>
       </Sheet>
@@ -330,10 +351,7 @@ export default function DashboardLayout() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="size-5" />
-              <span className="absolute top-1 right-1 size-2 rounded-full bg-destructive" />
-            </Button>
+            <NotificationPanel />
             <DropdownMenu>
               <DropdownMenuTrigger className="relative size-10 rounded-full">
                 <Avatar className="size-10">

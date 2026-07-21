@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Prescription;
 use App\Entity\Patient;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class PrescriptionController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly NotificationService $notificationService,
     ) {}
 
     #[Route('', name: 'prescription_list', methods: ['GET'])]
@@ -78,6 +80,11 @@ class PrescriptionController extends AbstractController
 
         $this->em->persist($prescription);
         $this->em->flush();
+
+        $this->notificationService->notifyPrescriptionCreated(
+            $patient->getFirstName() . ' ' . $patient->getLastName(),
+            $data['medication'],
+        );
 
         return $this->json([
             'message' => 'Prescription creee',

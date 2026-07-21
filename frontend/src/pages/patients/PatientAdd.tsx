@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '@/components/ToastProvider'
 
 export default function PatientAdd() {
+  const { addToast } = useToast()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,8 +52,10 @@ export default function PatientAdd() {
       }
 
       setSuccess(true)
+      addToast('Patient créé avec succès', 'success')
       setTimeout(() => navigate('/dashboard/patients'), 1500)
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de la création du patient', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)

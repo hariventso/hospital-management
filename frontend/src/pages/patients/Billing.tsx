@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, CreditCard, Search, Pencil, Trash2, Loader2, TrendingUp, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -40,6 +41,7 @@ const emptyForm = {
 }
 
 export default function Billing() {
+  const { addToast } = useToast()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -144,8 +146,10 @@ export default function Billing() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Facture mise à jour avec succès' : 'Facture créée avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement de la facture', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -159,9 +163,12 @@ export default function Billing() {
       const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setInvoices((prev) => prev.filter((inv) => inv.id !== id))
+        addToast('Facture supprimée avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression de la facture', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression de la facture', 'error')
     } finally {
       setDeletingId(null)
     }

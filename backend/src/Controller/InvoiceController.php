@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Invoice;
 use App\Entity\Patient;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class InvoiceController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly NotificationService $notificationService,
     ) {}
 
     #[Route('', name: 'invoice_list', methods: ['GET'])]
@@ -77,6 +79,11 @@ class InvoiceController extends AbstractController
 
         $this->em->persist($invoice);
         $this->em->flush();
+
+        $this->notificationService->notifyInvoiceCreated(
+            $patient->getFirstName() . ' ' . $patient->getLastName(),
+            (float) $data['amount'],
+        );
 
         return $this->json([
             'message' => 'Facture creee',

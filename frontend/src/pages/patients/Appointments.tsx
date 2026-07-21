@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, Calendar, Clock, User, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -40,6 +41,7 @@ const emptyForm = {
 }
 
 export default function Appointments() {
+  const { addToast } = useToast()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -134,8 +136,10 @@ export default function Appointments() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Rendez-vous mis à jour avec succès' : 'Rendez-vous créé avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement du rendez-vous', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -149,9 +153,12 @@ export default function Appointments() {
       const res = await fetch(`/api/appointments/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setAppointments((prev) => prev.filter((a) => a.id !== id))
+        addToast('Rendez-vous supprimé avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression du rendez-vous', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression du rendez-vous', 'error')
     } finally {
       setDeletingId(null)
     }

@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Appointment;
 use App\Entity\Patient;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class AppointmentController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly NotificationService $notificationService,
     ) {}
 
     #[Route('', name: 'appointment_list', methods: ['GET'])]
@@ -77,6 +79,12 @@ class AppointmentController extends AbstractController
 
         $this->em->persist($appointment);
         $this->em->flush();
+
+        $this->notificationService->notifyAppointmentCreated(
+            $patient->getFirstName() . ' ' . $patient->getLastName(),
+            $data['doctor'],
+            $data['date'],
+        );
 
         return $this->json([
             'message' => 'Rendez-vous cree',

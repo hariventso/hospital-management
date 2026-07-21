@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, Pill, Search, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -42,6 +43,7 @@ const emptyForm = {
 }
 
 export default function Prescriptions() {
+  const { addToast } = useToast()
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -139,8 +141,10 @@ export default function Prescriptions() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Prescription mise à jour avec succès' : 'Prescription créée avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement de la prescription', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -154,9 +158,12 @@ export default function Prescriptions() {
       const res = await fetch(`/api/prescriptions/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setPrescriptions((prev) => prev.filter((rx) => rx.id !== id))
+        addToast('Prescription supprimée avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression de la prescription', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression de la prescription', 'error')
     } finally {
       setDeletingId(null)
     }

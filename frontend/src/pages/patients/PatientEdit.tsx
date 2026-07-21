@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useToast } from '@/components/ToastProvider'
 
 export default function PatientEdit() {
+  const { addToast } = useToast()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -77,8 +79,10 @@ export default function PatientEdit() {
       }
 
       setSuccess(true)
+      addToast('Patient mis à jour avec succès', 'success')
       setTimeout(() => navigate('/dashboard/patients'), 1500)
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du patient', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)

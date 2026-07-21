@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Hospitalization;
 use App\Entity\Patient;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class HospitalizationController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly NotificationService $notificationService,
     ) {}
 
     #[Route('', name: 'hospitalization_list', methods: ['GET'])]
@@ -85,6 +87,12 @@ class HospitalizationController extends AbstractController
 
         $this->em->persist($hospitalization);
         $this->em->flush();
+
+        $this->notificationService->notifyHospitalizationCreated(
+            $patient->getFirstName() . ' ' . $patient->getLastName(),
+            $data['ward'],
+            $data['room'],
+        );
 
         return $this->json([
             'message' => 'Hospitalisation creee',

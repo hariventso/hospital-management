@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, TestTube, Search, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -40,6 +41,7 @@ const emptyForm = {
 }
 
 export default function Exams() {
+  const { addToast } = useToast()
   const [exams, setExams] = useState<Exam[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -136,8 +138,10 @@ export default function Exams() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Examen mis à jour avec succès' : 'Examen créé avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement de l\'examen', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -151,9 +155,12 @@ export default function Exams() {
       const res = await fetch(`/api/exams/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setExams((prev) => prev.filter((e) => e.id !== id))
+        addToast('Examen supprimé avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression de l\'examen', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression de l\'examen', 'error')
     } finally {
       setDeletingId(null)
     }

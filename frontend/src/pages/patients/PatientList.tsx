@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Plus, Search, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -22,6 +23,7 @@ interface Patient {
 }
 
 export default function PatientList() {
+  const { addToast } = useToast()
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -52,9 +54,12 @@ export default function PatientList() {
       const res = await fetch(`/api/patients/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setPatients((prev) => prev.filter((p) => p.id !== id))
+        addToast('Patient supprimé avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression du patient', 'error')
       }
     } catch {
-      console.error('Erreur de suppression')
+      addToast('Erreur lors de la suppression du patient', 'error')
     } finally {
       setDeletingId(null)
     }

@@ -19,6 +19,7 @@ import ReportsPatients from './pages/rapports/ReportsPatients'
 import ReportsHospitalizations from './pages/rapports/ReportsHospitalizations'
 import ReportsActivity from './pages/rapports/ReportsActivity'
 import ReportsFinance from './pages/rapports/ReportsFinance'
+import NotificationsPage from './pages/patients/NotificationsPage'
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="rapports/hospitalisations" element={<ReportsHospitalizations />} />
           <Route path="rapports/activite" element={<ReportsActivity />} />
           <Route path="rapports/finance" element={<ReportsFinance />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

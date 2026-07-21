@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, FileText, Search, Pencil, Trash2, Loader2, Eye } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 interface Patient {
   id: number
@@ -42,6 +43,7 @@ const emptyForm = {
 }
 
 export default function MedicalRecords() {
+  const { addToast } = useToast()
   const [records, setRecords] = useState<MedicalRecord[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,8 +139,10 @@ export default function MedicalRecords() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
 
       setDialogOpen(false)
+      addToast(editing ? 'Dossier médical mis à jour avec succès' : 'Dossier médical créé avec succès', 'success')
       fetchData()
     } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement du dossier médical', 'error')
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setSubmitting(false)
@@ -152,9 +156,12 @@ export default function MedicalRecords() {
       const res = await fetch(`/api/medical-records/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setRecords((prev) => prev.filter((r) => r.id !== id))
+        addToast('Dossier médical supprimé avec succès', 'success')
+      } else {
+        addToast('Erreur lors de la suppression du dossier médical', 'error')
       }
     } catch {
-      console.error('Erreur')
+      addToast('Erreur lors de la suppression du dossier médical', 'error')
     } finally {
       setDeletingId(null)
     }

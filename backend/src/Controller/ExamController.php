@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Exam;
 use App\Entity\Patient;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class ExamController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly NotificationService $notificationService,
     ) {}
 
     #[Route('', name: 'exam_list', methods: ['GET'])]
@@ -77,6 +79,14 @@ class ExamController extends AbstractController
 
         $this->em->persist($exam);
         $this->em->flush();
+
+        if (!empty($data['result'])) {
+            $this->notificationService->notifyExamResult(
+                $patient->getFirstName() . ' ' . $patient->getLastName(),
+                $data['type'],
+                $data['result'],
+            );
+        }
 
         return $this->json([
             'message' => 'Examen cree',
